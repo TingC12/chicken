@@ -1,11 +1,8 @@
-# ============================
 # path: app/models/economy.py
-# ============================
 from sqlalchemy import Column, BigInteger, Integer, String, DateTime, Enum, DECIMAL, Index
-from sqlalchemy.orm import declarative_base
 import enum
 from datetime import datetime
-from app.core.db import Base  # 你的 Base
+from app.core.db import Base
 
 class CheckinStatus(str, enum.Enum):
     started = "started"
@@ -24,14 +21,11 @@ class CoinsLedger(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, nullable=False)
     delta = Column(Integer, nullable=False)
-    source = Column(String(32), nullable=False)         # 'checkin' | 'run' | 'purchase' | ...
-    ref_id = Column(BigInteger, nullable=True)          # 對應 checkins.id / runs.id / purchases.id
-    idempotency_key = Column(String(64), nullable=True) # 防重入
+    source = Column(String(32), nullable=False)
+    ref_id = Column(BigInteger, nullable=True)
+    idempotency_key = Column(String(64), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    __table_args__ = (
-        Index("idx_coins_user_created", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("idx_coins_user_created", "user_id", "created_at"),)
 
 class Checkin(Base):
     __tablename__ = "checkins"
@@ -49,10 +43,7 @@ class Checkin(Base):
     reason = Column(String(128), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=True)
-
-    __table_args__ = (
-        Index("idx_checkins_user_created", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("idx_checkins_user_created", "user_id", "created_at"),)
 
 class Run(Base):
     __tablename__ = "runs"
@@ -65,7 +56,4 @@ class Run(Base):
     status = Column(Enum(RunStatus), nullable=False, default=RunStatus.submitted)
     reason = Column(String(128), nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    __table_args__ = (
-        Index("idx_runs_user_created", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("idx_runs_user_created", "user_id", "created_at"),)

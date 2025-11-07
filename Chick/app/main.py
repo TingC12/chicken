@@ -1,20 +1,35 @@
-# app/main.py
+# path: app/main.py
 from fastapi import FastAPI
-from app.routers import auth_guest
-from app.core.db import engine, Base
-from app.routers import auth_refresh          # ← 新增
+from fastapi.middleware.cors import CORSMiddleware
 
+# Auth 路由（注意：各檔本身不再有 prefix="/auth"）
+from app.routers.auth_guest import router as auth_guest_router
+from app.routers.auth_refresh import router as auth_refresh_router
 
-app = FastAPI()
-app.include_router(auth_guest.router)
-app.include_router(auth_refresh.router)        # ← 新增
+# 功能路由
+from app.routers.me import router as me_router
+from app.routers.checkins import router as checkins_router
+from app.routers.runs import router as runs_router
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+app = FastAPI(title="Chicken Backend")
 
-# 啟動時自動建立 ORM 對應資料表（與你 Workbench 結構相容時就會略過）
-@app.on_event("startup")
-async def on_startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 統一在這裡掛 /auth 前綴
+app.include_router(auth_guest_router,   prefix="/auth")
+app.include_router(auth_refresh_router, prefix="/auth")
+
+# 其他功能
+app.include_router(me_router)
+app.include_router(checkins_router)
+app.include_router(runs_router)
+
+@app.get("/")
+def root():
+    return {"ok": True}
